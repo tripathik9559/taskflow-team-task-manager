@@ -1,7 +1,7 @@
 // js/api.js
 // central place for all API calls - makes it easy to change base URL
 
-const API_BASE = '/api';
+const API_BASE = 'https://taskflow-team-task-manager-production.up.railway.app/api';
 
 // get token from localStorage
 const getToken = () => localStorage.getItem('token');
