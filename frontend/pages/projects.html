@@ -226,6 +226,7 @@
                     document.getElementById('addMemberSection').style.display = 'none';
                 }
             } catch (err) {
+                document.getElementById('membersList').innerHTML = '<p class="text-muted">Failed to load members.</p>';
                 showToast(err.message, 'error');
             }
         }
