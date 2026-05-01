@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasks - TaskFlow</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="app-layout">
+        <aside class="sidebar"></aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Tasks</h1>
+                    <p class="page-subtitle">Track and manage all tasks</p>
+                </div>
+                <button class="btn btn-primary" id="btnNewTask" style="width:auto">+ New Task</button>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters-row">
+                <input type="text" id="filterSearch" placeholder="🔍 Search tasks..." oninput="applyFilters()">
+                <select id="filterStatus" onchange="applyFilters()">
+                    <option value="">All Status</option>
+                    <option value="todo">To Do</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="done">Done</option>
+                </select>
+                <select id="filterPriority" onchange="applyFilters()">
+                    <option value="">All Priority</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+                <select id="filterProject" onchange="applyFilters()">
+                    <option value="">All Projects</option>
+                </select>
+                <button class="btn btn-outline btn-sm" onclick="clearFilters()">Clear</button>
+            </div>
+
+            <div class="card">
+                <div id="tasksList">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Task Modal -->
+    <div class="modal-overlay hidden" id="taskModal">
+        <div class="modal" style="max-width:560px">
+            <div class="modal-header">
+                <h3 class="modal-title" id="taskModalTitle">New Task</h3>
+                <button class="modal-close" onclick="closeTaskModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Title *</label>
+                <input type="text" id="taskTitle" placeholder="Task title">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="taskDesc" placeholder="Task details..."></textarea>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Project *</label>
+                    <select id="taskProject"></select>
+                </div>
+                <div class="form-group">
+                    <label>Assign To</label>
+                    <select id="taskAssignee">
+                        <option value="">Unassigned</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select id="taskPriority">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Deadline</label>
+                    <input type="date" id="taskDeadline">
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+                <button class="btn btn-outline" onclick="closeTaskModal()">Cancel</button>
+                <button class="btn btn-success" onclick="saveTask()">Save Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comments Modal -->
+    <div class="modal-overlay hidden" id="commentsModal">
+        <div class="modal" style="max-width:520px">
+            <div class="modal-header">
+                <h3 class="modal-title" id="commentsTaskTitle">Task Comments</h3>
+                <button class="modal-close" onclick="closeCommentsModal()">&times;</button>
+            </div>
+            <div id="commentsList" style="max-height:300px;overflow-y:auto;margin-bottom:16px"></div>
+            <div class="form-group">
+                <label>Add Comment</label>
+                <textarea id="newComment" placeholder="Write a comment..." rows="3"></textarea>
+            </div>
+            <div style="text-align:right">
+                <button class="btn btn-primary" style="width:auto" onclick="submitComment()">Post Comment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Update Modal (for members) -->
+    <div class="modal-overlay hidden" id="statusModal">
+        <div class="modal" style="max-width:360px">
+            <div class="modal-header">
+                <h3 class="modal-title">Update Task Status</h3>
+                <button class="modal-close" onclick="document.getElementById('statusModal').classList.add('hidden')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>New Status</label>
+                <select id="newStatus">
+                    <option value="todo">To Do</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="done">Done</option>
+                </select>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+                <button class="btn btn-outline" onclick="document.getElementById('statusModal').classList.add('hidden')">Cancel</button>
+                <button class="btn btn-success" onclick="saveStatusUpdate()">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <script>
+        const user = requireAuth();
+        const isAdmin = user.role === 'admin';
+        renderSidebar('tasks');
+
+        let allTasks = [];
+        let editingTaskId = null;
+        let activeCommentTaskId = null;
+        let statusUpdateTaskId = null;
+        let allProjects = [];
+        let allUsers = [];
+
+        if (!isAdmin) document.getElementById('btnNewTask').classList.add('hidden');
+        document.getElementById('btnNewTask').onclick = () => openTaskModal();
+
+        async function loadData() {
+            try {
+                const [tasks, projects] = await Promise.all([
+                    api.getTasks(),
+                    api.getProjects()
+                ]);
+                allTasks = tasks;
+                allProjects = projects;
+
+                if (isAdmin) {
+                    allUsers = await api.getAllUsers();
+                }
+
+                // populate project filter dropdown
+                const filterProj = document.getElementById('filterProject');
+                projects.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.name;
+                    filterProj.appendChild(opt);
+                });
+
+                renderTasks(allTasks);
+            } catch (err) {
+                showToast('Failed to load tasks: ' + err.message, 'error');
+            }
+        }
+
+        function applyFilters() {
+            const search   = document.getElementById('filterSearch').value.toLowerCase();
+            const status   = document.getElementById('filterStatus').value;
+            const priority = document.getElementById('filterPriority').value;
+            const project  = document.getElementById('filterProject').value;
+
+            const filtered = allTasks.filter(t => {
+                const matchSearch = !search ||
+                    t.title.toLowerCase().includes(search) ||
+                    (t.description || '').toLowerCase().includes(search);
+                const matchStatus   = !status   || t.status === status;
+                const matchPriority = !priority || t.priority === priority;
+                const matchProject  = !project  || String(t.project_id) === project;
+                return matchSearch && matchStatus && matchPriority && matchProject;
+            });
+
+            renderTasks(filtered);
+        }
+
+        function clearFilters() {
+            document.getElementById('filterSearch').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterPriority').value = '';
+            document.getElementById('filterProject').value = '';
+            renderTasks(allTasks);
+        }
+
+        function renderTasks(tasks) {
+            if (tasks.length === 0) {
+                document.getElementById('tasksList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <p>No tasks found.</p>
+                    </div>`;
+                return;
+            }
+
+            document.getElementById('tasksList').innerHTML = `
+                <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Project</th>
+                            <th>Assigned To</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Deadline</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tasks.map(t => {
+                            const overdue = isOverdue(t.deadline, t.status);
+                            return `
+                            <tr class="${overdue ? 'overdue-row' : ''}">
+                                <td class="fw-600">${t.title}</td>
+                                <td>${t.project_name || '—'}</td>
+                                <td>${t.assigned_to_name || '<span class="text-muted">Unassigned</span>'}</td>
+                                <td>${statusBadge(t.status)}</td>
+                                <td>${priorityBadge(t.priority)}</td>
+                                <td class="${overdue ? 'overdue-text' : ''}">
+                                    ${formatDate(t.deadline)}
+                                    ${overdue ? ' ⚠️' : ''}
+                                </td>
+                                <td>
+                                    <div style="display:flex;gap:5px">
+                                        <button class="btn btn-outline btn-sm" onclick="openCommentsModal(${t.id}, '${escQ(t.title)}')">💬</button>
+                                        ${isAdmin ? `
+                                            <button class="btn btn-outline btn-sm" onclick="openTaskModal(${t.id})">✏️</button>
+                                            <button class="btn btn-danger btn-sm" onclick="deleteTask(${t.id}, '${escQ(t.title)}')">🗑️</button>
+                                        ` : `
+                                            ${t.assigned_to === user.id ? `
+                                                <button class="btn btn-outline btn-sm" onclick="openStatusModal(${t.id}, '${t.status}')">🔄 Status</button>
+                                            ` : ''}
+                                        `}
+                                    </div>
+                                </td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                </div>
+            `;
+        }
+
+        function escQ(str) {
+            return (str || '').replace(/'/g, "\\'");
+        }
+
+        async function openTaskModal(id = null) {
+            editingTaskId = id;
+            document.getElementById('taskModalTitle').textContent = id ? 'Edit Task' : 'New Task';
+
+            // populate project dropdown
+            const projSelect = document.getElementById('taskProject');
+            projSelect.innerHTML = allProjects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+
+            // populate assignee dropdown
+            const assigneeSelect = document.getElementById('taskAssignee');
+            assigneeSelect.innerHTML = '<option value="">Unassigned</option>' +
+                allUsers.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+
+            if (id) {
+                const task = allTasks.find(t => t.id === id);
+                if (task) {
+                    document.getElementById('taskTitle').value = task.title;
+                    document.getElementById('taskDesc').value = task.description || '';
+                    projSelect.value = task.project_id;
+                    assigneeSelect.value = task.assigned_to || '';
+                    document.getElementById('taskPriority').value = task.priority;
+                    document.getElementById('taskDeadline').value = task.deadline ? task.deadline.split('T')[0] : '';
+                }
+            } else {
+                document.getElementById('taskTitle').value = '';
+                document.getElementById('taskDesc').value = '';
+                document.getElementById('taskPriority').value = 'medium';
+                document.getElementById('taskDeadline').value = '';
+                document.getElementById('taskAssignee').value = '';
+            }
+
+            document.getElementById('taskModal').classList.remove('hidden');
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.add('hidden');
+            editingTaskId = null;
+        }
+
+        async function saveTask() {
+            const title      = document.getElementById('taskTitle').value.trim();
+            const description = document.getElementById('taskDesc').value.trim();
+            const projectId  = document.getElementById('taskProject').value;
+            const assignedTo = document.getElementById('taskAssignee').value || null;
+            const priority   = document.getElementById('taskPriority').value;
+            const deadline   = document.getElementById('taskDeadline').value || null;
+
+            if (!title || !projectId) return showToast('Title and project are required', 'error');
+
+            try {
+                if (editingTaskId) {
+                    await api.updateTask(editingTaskId, { title, description, assignedTo, priority, deadline });
+                    showToast('Task updated!');
+                } else {
+                    await api.createTask({ projectId, title, description, assignedTo, priority, deadline });
+                    showToast('Task created!');
+                }
+                closeTaskModal();
+                // reload tasks
+                allTasks = await api.getTasks();
+                renderTasks(allTasks);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function deleteTask(id, title) {
+            if (!confirm(`Delete task "${title}"?`)) return;
+            try {
+                await api.deleteTask(id);
+                showToast('Task deleted');
+                allTasks = allTasks.filter(t => t.id !== id);
+                renderTasks(allTasks);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function openCommentsModal(taskId, taskTitle) {
+            activeCommentTaskId = taskId;
+            document.getElementById('commentsTaskTitle').textContent = `💬 ${taskTitle}`;
+            document.getElementById('newComment').value = '';
+            document.getElementById('commentsModal').classList.remove('hidden');
+            document.getElementById('commentsList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const comments = await api.getComments(taskId);
+                document.getElementById('commentsList').innerHTML = comments.length === 0
+                    ? '<p class="text-muted">No comments yet. Be the first!</p>'
+                    : comments.map(c => `
+                        <div class="comment">
+                            <div class="comment-meta">
+                                <strong>${c.user_name}</strong> · ${formatDateTime(c.created_at)}
+                            </div>
+                            <div class="comment-text">${c.comment}</div>
+                        </div>
+                    `).join('');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function closeCommentsModal() {
+            document.getElementById('commentsModal').classList.add('hidden');
+        }
+
+        async function submitComment() {
+            const comment = document.getElementById('newComment').value.trim();
+            if (!comment) return showToast('Please write a comment', 'error');
+
+            try {
+                await api.addComment(activeCommentTaskId, { comment });
+                showToast('Comment added!');
+                // reload comments
+                const comments = await api.getComments(activeCommentTaskId);
+                document.getElementById('commentsList').innerHTML = comments.map(c => `
+                    <div class="comment">
+                        <div class="comment-meta">
+                            <strong>${c.user_name}</strong> · ${formatDateTime(c.created_at)}
+                        </div>
+                        <div class="comment-text">${c.comment}</div>
+                    </div>
+                `).join('');
+                document.getElementById('newComment').value = '';
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function openStatusModal(taskId, currentStatus) {
+            statusUpdateTaskId = taskId;
+            document.getElementById('newStatus').value = currentStatus;
+            document.getElementById('statusModal').classList.remove('hidden');
+        }
+
+        async function saveStatusUpdate() {
+            const status = document.getElementById('newStatus').value;
+            try {
+                await api.updateTask(statusUpdateTaskId, { status });
+                showToast('Status updated!');
+                document.getElementById('statusModal').classList.add('hidden');
+                allTasks = await api.getTasks();
+                renderTasks(allTasks);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

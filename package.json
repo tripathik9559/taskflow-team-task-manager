@@ -1,0 +1,21 @@
+{
+  "name": "taskflow-team-task-manager",
+  "version": "1.0.0",
+  "description": "Full Stack Team Task Manager - Assignment Project",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "cd backend && nodemon server.js",
+    "install-deps": "cd backend && npm install"
+  },
+  "author": "Kartikey Kumar Tripathi",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "mysql2": "^3.3.3"
+  }
+}

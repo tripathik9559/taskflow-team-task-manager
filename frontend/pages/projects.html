@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - TaskFlow</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="app-layout">
+        <aside class="sidebar"></aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Projects</h1>
+                    <p class="page-subtitle">Manage your team projects</p>
+                </div>
+                <button class="btn btn-primary" id="btnNewProject" style="width:auto">+ New Project</button>
+            </div>
+
+            <div class="card">
+                <div class="card-body" id="projectsList">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Project Modal -->
+    <div class="modal-overlay hidden" id="projectModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="projectModalTitle">New Project</h3>
+                <button class="modal-close" onclick="closeProjectModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Project Name *</label>
+                <input type="text" id="projectName" placeholder="Enter project name">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="projectDesc" placeholder="What is this project about?"></textarea>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+                <button class="btn btn-outline" onclick="closeProjectModal()">Cancel</button>
+                <button class="btn btn-success" onclick="saveProject()">Save Project</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Members Modal -->
+    <div class="modal-overlay hidden" id="membersModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Manage Members</h3>
+                <button class="modal-close" onclick="closeMembersModal()">&times;</button>
+            </div>
+            <div id="membersList"></div>
+            <div id="addMemberSection" class="mt-16">
+                <label>Add Member</label>
+                <div style="display:flex;gap:8px;margin-top:6px">
+                    <select id="addMemberSelect" style="flex:1"></select>
+                    <button class="btn btn-primary" style="width:auto" onclick="addMember()">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <script>
+        const user = requireAuth();
+        const isAdmin = user.role === 'admin';
+        renderSidebar('projects');
+
+        let editingProjectId = null;
+        let activeMembersProjectId = null;
+        let allUsers = [];
+
+        // hide "New Project" button for members
+        if (!isAdmin) document.getElementById('btnNewProject').classList.add('hidden');
+        document.getElementById('btnNewProject').onclick = () => openProjectModal();
+
+        async function loadProjects() {
+            setLoading('projectsList', true);
+            try {
+                const projects = await api.getProjects();
+                if (projects.length === 0) {
+                    document.getElementById('projectsList').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📁</div>
+                            <p>No projects yet. ${isAdmin ? 'Create your first project!' : 'You have not been added to any project.'}</p>
+                        </div>`;
+                    return;
+                }
+
+                document.getElementById('projectsList').innerHTML = `
+                    <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Description</th>
+                                <th>Members</th>
+                                <th>Tasks</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${projects.map(p => `
+                                <tr>
+                                    <td class="fw-600">${p.name}</td>
+                                    <td class="text-muted">${p.description || '—'}</td>
+                                    <td>${p.member_count}</td>
+                                    <td>${p.task_count}</td>
+                                    <td>${formatDate(p.created_at)}</td>
+                                    <td>
+                                        <div style="display:flex;gap:6px">
+                                            <button class="btn btn-outline btn-sm" onclick="openMembersModal(${p.id})">👥 Members</button>
+                                            ${isAdmin ? `
+                                                <button class="btn btn-outline btn-sm" onclick="openProjectModal(${p.id}, '${escapeQ(p.name)}', '${escapeQ(p.description || '')}')">✏️</button>
+                                                <button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id}, '${escapeQ(p.name)}')">🗑️</button>
+                                            ` : ''}
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    </div>
+                `;
+            } catch (err) {
+                showToast('Failed to load projects: ' + err.message, 'error');
+            }
+        }
+
+        function escapeQ(str) {
+            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        function openProjectModal(id = null, name = '', desc = '') {
+            editingProjectId = id;
+            document.getElementById('projectModalTitle').textContent = id ? 'Edit Project' : 'New Project';
+            document.getElementById('projectName').value = name;
+            document.getElementById('projectDesc').value = desc;
+            document.getElementById('projectModal').classList.remove('hidden');
+        }
+
+        function closeProjectModal() {
+            document.getElementById('projectModal').classList.add('hidden');
+            editingProjectId = null;
+        }
+
+        async function saveProject() {
+            const name = document.getElementById('projectName').value.trim();
+            const description = document.getElementById('projectDesc').value.trim();
+            if (!name) return showToast('Project name is required', 'error');
+
+            try {
+                if (editingProjectId) {
+                    await api.updateProject(editingProjectId, { name, description });
+                    showToast('Project updated!');
+                } else {
+                    await api.createProject({ name, description });
+                    showToast('Project created!');
+                }
+                closeProjectModal();
+                loadProjects();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function deleteProject(id, name) {
+            if (!confirm(`Delete project "${name}"? This will also delete all its tasks.`)) return;
+            try {
+                await api.deleteProject(id);
+                showToast('Project deleted');
+                loadProjects();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function openMembersModal(projectId) {
+            activeMembersProjectId = projectId;
+            document.getElementById('membersModal').classList.remove('hidden');
+            document.getElementById('membersList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const [members, users] = await Promise.all([
+                    api.getMembers(projectId),
+                    isAdmin ? api.getAllUsers() : Promise.resolve([])
+                ]);
+                allUsers = users;
+
+                // render current members
+                document.getElementById('membersList').innerHTML = members.length === 0
+                    ? '<p class="text-muted">No members yet.</p>'
+                    : members.map(m => `
+                        <div class="flex-between mb-16">
+                            <div>
+                                <span class="fw-600">${m.name}</span>
+                                <span class="badge badge-${m.role}" style="margin-left:6px">${m.role}</span>
+                                <div class="text-muted">${m.email}</div>
+                            </div>
+                            ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="removeMember(${m.id})">Remove</button>` : ''}
+                        </div>
+                    `).join('');
+
+                // populate add member dropdown (exclude existing)
+                if (isAdmin) {
+                    const existingIds = members.map(m => m.id);
+                    const available = users.filter(u => !existingIds.includes(u.id));
+                    document.getElementById('addMemberSection').style.display = available.length ? 'block' : 'none';
+                    document.getElementById('addMemberSelect').innerHTML = available.map(u =>
+                        `<option value="${u.id}">${u.name} (${u.role})</option>`
+                    ).join('');
+                } else {
+                    document.getElementById('addMemberSection').style.display = 'none';
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function closeMembersModal() {
+            document.getElementById('membersModal').classList.add('hidden');
+        }
+
+        async function addMember() {
+            const userId = document.getElementById('addMemberSelect').value;
+            if (!userId) return showToast('Select a user', 'error');
+            try {
+                await api.addMember(activeMembersProjectId, { userId });
+                showToast('Member added');
+                openMembersModal(activeMembersProjectId);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function removeMember(userId) {
+            if (!confirm('Remove this member from the project?')) return;
+            try {
+                await api.removeMember(activeMembersProjectId, userId);
+                showToast('Member removed');
+                openMembersModal(activeMembersProjectId);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        loadProjects();
+    </script>
+</body>
+</html>
