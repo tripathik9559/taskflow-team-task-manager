@@ -144,7 +144,7 @@
     <script src="/js/sidebar.js"></script>
     <script>
         const user = requireAuth();
-        const isAdmin = user.role === 'admin';
+        const isAdmin = user.role?.toLowerCase() === 'admin';
         renderSidebar('tasks');
 
         let allTasks = [];
