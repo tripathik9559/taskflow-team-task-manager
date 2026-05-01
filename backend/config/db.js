@@ -82,6 +82,16 @@ const initDB = async () => {
             user_id INT,
             PRIMARY KEY (project_id, user_id)
         )`);
+        // Migration fixes
+        await pool.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS deadline DATE`).catch(() => {});
+        await pool.query(`CREATE TABLE IF NOT EXISTS activity_log (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            action VARCHAR(255) NOT NULL,
+            entity_type VARCHAR(50),
+            entity_id INT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`).catch(() => {});
         console.log('Database tables ready');
     } catch (err) {
         console.error('DB init error:', err.message);
