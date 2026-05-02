@@ -156,7 +156,7 @@ const removeMember = async (req, res) => {
 const getMembers = async (req, res) => {
     try {
         const [rows] = await db.query(`
-            SELECT u.id, u.name, u.email, u.role, pm.joined_at
+            SELECT u.id, u.name, u.email, u.role
             FROM project_members pm
             JOIN users u ON pm.user_id = u.id
             WHERE pm.project_id = ?
