@@ -1,8 +1,7 @@
 // js/api.js
 // central place for all API calls - makes it easy to change base URL
 
-const API_BASE = 'https://taskflow-manager-production-03eb.up.railway.app/api';
-// get token from localStorage
+const API_BASE = 'https://taskflow-team-task-manager-production.up.railway.app/api';// get token from localStorage
 const getToken = () => localStorage.getItem('token');
 
 // generic fetch wrapper - handles auth headers + JSON parsing
