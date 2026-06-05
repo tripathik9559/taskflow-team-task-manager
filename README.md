@@ -5,26 +5,15 @@
 ### A Full-Stack Team Task Manager
 
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-![Express](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)
 
-**[🚀 Live Demo](https://taskflow-team-task-manager-production.up.railway.app/)** · **[📁 Report Bug](https://github.com/your-username/taskmanager/issues)** · **[✨ Request Feature](https://github.com/your-username/taskmanager/issues)**
 
 </div>
 
 ---
 
-## 📸 Preview
 
-| Login | Dashboard | Tasks |
-|-------|-----------|-------|
-| ![Login](screenshots/login.png) | ![Dashboard](screenshots/dashboard.png) | ![Tasks](screenshots/tasks.png) |
-
-> *Add screenshots to a `/screenshots` folder in the repo to show them here*
-
----
 
 ## 🎯 About The Project
 
