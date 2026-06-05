@@ -1,7 +1,12 @@
 // js/api.js
 // central place for all API calls - makes it easy to change base URL
 
-const API_BASE = 'https://taskflow-team-task-manager-production.up.railway.app/api';// get token from localStorage
+// Works in both local dev and Railway deploy
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? `http://${window.location.host}/api`
+    : `${window.location.origin}/api`;
+
+// get token from localStorage
 const getToken = () => localStorage.getItem('token');
 
 // generic fetch wrapper - handles auth headers + JSON parsing

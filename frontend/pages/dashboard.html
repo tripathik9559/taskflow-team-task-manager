@@ -21,7 +21,7 @@
                 </div>
             </div>
 
-            <!-- Stats -->
+            <!-- Stats Grid -->
             <div class="stats-grid" id="statsGrid">
                 <div class="loading"><div class="spinner"></div></div>
             </div>
@@ -73,51 +73,82 @@
             try {
                 const data = await api.getDashboard();
                 const s = data.stats;
+                const activeProjects = data.projectStats.length;
+                const completedProjects = data.projectStats.filter(p =>
+                    p.total_tasks > 0 && p.done_tasks === p.total_tasks
+                ).length;
 
-                // render stat cards
-                document.getElementById('statsGrid').innerHTML = `
-                    <div class="stat-card primary">
-                        <div class="stat-number">${s.total || 0}</div>
-                        <div class="stat-label">Total Tasks</div>
+                // render stat cards — exactly: Total, Completed, Pending, Active Projects + extras
+                const statCards = [
+                    {
+                        label: 'Total Tasks',
+                        value: s.total || 0,
+                        icon: '📋',
+                        cls: 'primary',
+                        sub: `across ${activeProjects} project${activeProjects !== 1 ? 's' : ''}`
+                    },
+                    {
+                        label: 'Completed',
+                        value: s.done || 0,
+                        icon: '✅',
+                        cls: 'success',
+                        sub: s.total > 0 ? `${Math.round((s.done / s.total) * 100)}% completion rate` : '0% completion rate'
+                    },
+                    {
+                        label: 'Pending',
+                        value: (s.todo || 0) + (s.in_progress || 0),
+                        icon: '⏳',
+                        cls: 'warning',
+                        sub: `${s.in_progress || 0} in progress · ${s.todo || 0} to do`
+                    },
+                    {
+                        label: 'Active Projects',
+                        value: activeProjects,
+                        icon: '📁',
+                        cls: 'info',
+                        sub: completedProjects > 0 ? `${completedProjects} fully completed` : 'in progress'
+                    },
+                    {
+                        label: 'Overdue',
+                        value: s.overdue || 0,
+                        icon: '🔴',
+                        cls: s.overdue > 0 ? 'danger' : 'success',
+                        sub: s.overdue > 0 ? 'need immediate attention' : 'all on track'
+                    },
+                    ...(data.totalUsers !== null ? [{
+                        label: 'Team Members',
+                        value: data.totalUsers,
+                        icon: '👥',
+                        cls: '',
+                        sub: 'registered users'
+                    }] : [])
+                ];
+
+                document.getElementById('statsGrid').innerHTML = statCards.map(c => `
+                    <div class="stat-card ${c.cls}">
+                        <div class="stat-icon">${c.icon}</div>
+                        <div class="stat-number">${c.value}</div>
+                        <div class="stat-label">${c.label}</div>
+                        <div class="stat-sub">${c.sub}</div>
                     </div>
-                    <div class="stat-card warning">
-                        <div class="stat-number">${s.todo || 0}</div>
-                        <div class="stat-label">To Do</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">${s.in_progress || 0}</div>
-                        <div class="stat-label">In Progress</div>
-                    </div>
-                    <div class="stat-card success">
-                        <div class="stat-number">${s.done || 0}</div>
-                        <div class="stat-label">Done</div>
-                    </div>
-                    <div class="stat-card danger">
-                        <div class="stat-number">${s.overdue || 0}</div>
-                        <div class="stat-label">Overdue</div>
-                    </div>
-                    ${data.totalUsers !== null ? `
-                    <div class="stat-card">
-                        <div class="stat-number">${data.totalUsers}</div>
-                        <div class="stat-label">Team Members</div>
-                    </div>` : ''}
-                `;
+                `).join('');
 
                 // project progress bars
                 if (data.projectStats.length === 0) {
                     document.getElementById('projectProgress').innerHTML =
-                        '<div class="empty-state"><div class="empty-state-icon">📁</div><p>No projects yet</p></div>';
+                        '<div class="empty-state"><div class="empty-state-icon">📁</div><p>No projects yet</p><p class="text-muted" style="font-size:12px;margin-top:4px">Create a project to get started</p></div>';
                 } else {
                     document.getElementById('projectProgress').innerHTML = data.projectStats.map(p => {
                         const pct = p.total_tasks > 0 ? Math.round((p.done_tasks / p.total_tasks) * 100) : 0;
+                        const barColor = pct === 100 ? 'var(--success)' : pct >= 50 ? 'var(--primary)' : 'var(--warning)';
                         return `
-                            <div class="mb-16">
+                            <div class="project-progress-item">
                                 <div class="flex-between mb-4">
                                     <span class="fw-600" style="font-size:13px">${p.name}</span>
-                                    <span class="text-muted">${p.done_tasks}/${p.total_tasks} tasks · ${pct}%</span>
+                                    <span class="text-muted">${p.done_tasks}/${p.total_tasks} · <strong style="color:${barColor}">${pct}%</strong></span>
                                 </div>
                                 <div class="progress-bar-wrap">
-                                    <div class="progress-bar-fill" style="width:${pct}%"></div>
+                                    <div class="progress-bar-fill" style="width:${pct}%;background:${barColor}"></div>
                                 </div>
                             </div>
                         `;
@@ -127,7 +158,7 @@
                 // recent activity
                 if (data.recentActivity.length === 0) {
                     document.getElementById('recentActivity').innerHTML =
-                        '<div class="empty-state"><p>No activity yet</p></div>';
+                        '<div class="empty-state"><div class="empty-state-icon">🕐</div><p>No activity yet</p></div>';
                 } else {
                     document.getElementById('recentActivity').innerHTML = data.recentActivity.map(a => `
                         <div class="activity-item">
@@ -143,7 +174,7 @@
                 // overdue tasks
                 if (data.overdueTasks.length === 0) {
                     document.getElementById('overdueSection').innerHTML =
-                        '<div class="empty-state"><div class="empty-state-icon">✅</div><p>No overdue tasks. Great job!</p></div>';
+                        '<div class="empty-state"><div class="empty-state-icon">✅</div><p>No overdue tasks</p><p class="text-muted" style="font-size:12px;margin-top:4px">Great job staying on track!</p></div>';
                 } else {
                     document.getElementById('overdueSection').innerHTML = `
                         <div class="table-container">
@@ -162,7 +193,7 @@
                                     <tr class="overdue-row">
                                         <td class="fw-600">${t.title}</td>
                                         <td>${t.project_name || '—'}</td>
-                                        <td>${t.assigned_to_name || 'Unassigned'}</td>
+                                        <td>${t.assigned_to_name || '<span class="text-muted">Unassigned</span>'}</td>
                                         <td class="overdue-text">${formatDate(t.deadline)}</td>
                                         <td>${priorityBadge(t.priority)}</td>
                                     </tr>

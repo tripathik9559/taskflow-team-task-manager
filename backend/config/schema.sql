@@ -79,3 +79,11 @@ CREATE TABLE IF NOT EXISTS activity_log (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- =====================================================
+-- Demo Accounts (password: TaskFlow@2025)
+-- Bcrypt hash with 10 rounds
+-- =====================================================
+INSERT IGNORE INTO users (name, email, password, role) VALUES
+('Demo Admin', 'demo_admin@example.com', '$2a$10$KbT2uWhYaKLhpkP4EEhxXOMM48yZRNcDD7Gc5BjVhUDcTG/Py4IPy', 'admin'),
+('Demo User',  'demo_user@example.com',  '$2a$10$2WSK2CMl30.JIXbwJ1c/qe5MftN21kLuSEVQ/LrVX2nJQwVPYAq3y',  'member');

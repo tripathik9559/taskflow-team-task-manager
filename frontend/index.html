@@ -19,6 +19,28 @@
                 <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')">Sign Up</button>
             </div>
 
+            <!-- Demo Credentials Banner -->
+            <div class="demo-banner" id="demoBanner">
+                <div class="demo-banner-title">🚀 Try Demo Accounts</div>
+                <div class="demo-accounts">
+                    <div class="demo-account">
+                        <div class="demo-account-info">
+                            <span class="demo-badge demo-badge-admin">Admin</span>
+                            <span class="demo-creds">demo_admin@example.com</span>
+                        </div>
+                        <button class="btn-autofill" onclick="autofill('demo_admin@example.com', 'TaskFlow@2025')">Auto Fill</button>
+                    </div>
+                    <div class="demo-account">
+                        <div class="demo-account-info">
+                            <span class="demo-badge demo-badge-member">Member</span>
+                            <span class="demo-creds">demo_user@example.com</span>
+                        </div>
+                        <button class="btn-autofill" onclick="autofill('demo_user@example.com', 'TaskFlow@2025')">Auto Fill</button>
+                    </div>
+                    <div class="demo-password-note">Password for both: <strong>TaskFlow@2025</strong></div>
+                </div>
+            </div>
+
             <!-- Login Form -->
             <div id="loginForm">
                 <div class="form-group">
@@ -30,9 +52,6 @@
                     <input type="password" id="loginPassword" placeholder="Enter password">
                 </div>
                 <button class="btn btn-primary" onclick="handleLogin()">Login</button>
-                <p class="text-muted mt-16" style="text-align:center">
-                    Demo: admin@test.com / password123
-                </p>
             </div>
 
             <!-- Signup Form -->
@@ -67,12 +86,23 @@
         // if already logged in, go to dashboard
         redirectIfLoggedIn();
 
+        function autofill(email, password) {
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('loginPassword').value = password;
+            // switch to login tab if on signup
+            if (!document.getElementById('loginForm').classList.contains('hidden') === false) {
+                switchTab('login');
+            }
+            document.getElementById('loginEmail').focus();
+        }
+
         function switchTab(tab) {
             const isLogin = tab === 'login';
             document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
             document.getElementById('signupForm').classList.toggle('hidden', isLogin);
             document.getElementById('tabLogin').classList.toggle('active', isLogin);
             document.getElementById('tabSignup').classList.toggle('active', !isLogin);
+            document.getElementById('demoBanner').classList.toggle('hidden', !isLogin);
         }
 
         async function handleLogin() {

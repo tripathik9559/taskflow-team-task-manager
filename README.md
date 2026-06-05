@@ -1,235 +1,313 @@
-# TaskFlow — Team Task Manager
+<div align="center">
 
-## LIVE DEMO **https://taskflow-manager-production-03eb.up.railway.app/**
+# ⚡ TaskFlow
 
-**Kartikey Kumar Tripathi**  
-Babu Banarasi Das Northern India Institute of Technology  
+### A Full-Stack Team Task Manager
 
----
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)
 
-I built this as a full-stack assignment project. The idea was simple — most task management tools are either too complex or don't actually enforce who can do what. So I made one from scratch where the role separation (Admin vs Member) is strict and baked into both the frontend and backend.
+**[🚀 Live Demo](https://taskflow-team-task-manager-production.up.railway.app/)** · **[📁 Report Bug](https://github.com/your-username/taskmanager/issues)** · **[✨ Request Feature](https://github.com/your-username/taskmanager/issues)**
 
-The whole thing runs on Node.js + Express on the backend, MySQL for storage, and plain HTML/CSS/JS on the frontend — no React, no fancy frameworks. Just the basics, done properly.
-
----
-
-## What it does
-
-When you log in as an **Admin**, you can create projects, add team members to those projects, create tasks and assign them to members, set deadlines and priority levels, and track everything from a central dashboard. You can also see the full activity log — who did what and when.
-
-When you log in as a **Member**, you only see the tasks assigned to you. You can't create tasks or projects. What you *can* do is update the status of your own tasks (Todo → In Progress → Done) and leave comments. That's it — nothing more, nothing less.
-
-The dashboard shows live stats: total tasks, how many are pending/in-progress/done, and which ones are overdue. Overdue tasks turn red automatically based on the deadline date.
+</div>
 
 ---
 
-## Features
+## 📸 Preview
 
-- Signup and login with JWT authentication — tokens expire after 7 days
-- Admin and Member roles — enforced on every API route, not just the UI
-- Create, edit, delete projects
-- Add and remove members from specific projects
-- Create tasks with title, description, assignee, deadline, and priority (Low / Medium / High)
-- Task status tracking — Todo → In Progress → Done
-- Task comments — members can leave notes on any task
-- Activity log — every action is recorded with the user's name and timestamp
-- Dashboard with project progress bars and overdue task list
-- Search and filter tasks by status, priority, project, or keyword — all client-side JS, no extra libraries
-- Profile page to update your name and email
-- Responsive layout — works on mobile too, pure CSS
+| Login | Dashboard | Tasks |
+|-------|-----------|-------|
+| ![Login](screenshots/login.png) | ![Dashboard](screenshots/dashboard.png) | ![Tasks](screenshots/tasks.png) |
+
+> *Add screenshots to a `/screenshots` folder in the repo to show them here*
 
 ---
 
-## Tech Stack
+## 🎯 About The Project
 
-| Layer | Technology |
-|---|---|
-| Frontend | HTML, CSS, Vanilla JavaScript |
-| Backend | Node.js, Express.js |
-| Database | MySQL |
-| Auth | JWT (jsonwebtoken + bcryptjs) |
-| Deployment | Railway |
+TaskFlow is a role-based team task management web app built as a college assignment project. The focus was on building a clean full-stack application from scratch — no frontend frameworks, no ORMs, just the fundamentals done properly.
 
-No frontend framework. No ORM. Just raw SQL queries and fetch() calls — which makes the code easier to read and debug.
+**The core idea:** most task tools don't enforce role permissions at the API level — they just hide buttons in the UI. TaskFlow enforces every permission server-side, so a Member genuinely cannot create or delete tasks regardless of how they call the API.
 
 ---
 
-## Project Structure
+## ✨ Features
+
+- 🔐 **JWT Authentication** — Secure login/signup, tokens expire after 7 days
+- 👥 **Role-Based Access Control** — Admin vs Member, enforced on every API route
+- 📁 **Project Management** — Create projects, add/remove team members per project
+- ✅ **Task Tracking** — Full CRUD with priority, deadline, assignee, and status flow
+- 📊 **Live Dashboard** — Stats: total, completed, pending, active projects, overdue
+- 💬 **Task Comments** — Team members can discuss tasks inline
+- 📋 **Activity Log** — Every action recorded with user and timestamp
+- 🔴 **Overdue Detection** — Automatic flagging based on deadline date
+- 🔍 **Search & Filter** — Filter by status, priority, project, or keyword
+- 📱 **Responsive Design** — Works on mobile with collapsible sidebar
+
+---
+
+## 🚀 Try It Live
+
+> No signup needed — use the demo accounts below
+
+| Role | Email | Password |
+|------|-------|----------|
+| 👑 Admin | `demo_admin@example.com` | `TaskFlow@2025` |
+| 👤 Member | `demo_user@example.com` | `TaskFlow@2025` |
+
+**Admin** can create projects, assign tasks, manage team members, and view the full activity log.  
+**Member** can view assigned tasks, update their status, and add comments.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| Frontend | HTML5, CSS3, Vanilla JS | No build step, easy to read |
+| Backend | Node.js + Express.js | Lightweight, fast to build |
+| Database | MySQL | Relational data with proper FK constraints |
+| Auth | JWT + bcryptjs | Stateless auth, hashed passwords |
+| Deployment | Railway | Free tier, easy MySQL plugin |
+
+No React. No ORM. Raw SQL and `fetch()` — which makes the code transparent and close to fundamentals.
+
+---
+
+## 📂 Project Structure
 
 ```
 taskmanager/
 ├── backend/
 │   ├── config/
-│   │   ├── db.js              # MySQL connection pool setup
-│   │   └── schema.sql         # All table definitions — run this first
+│   │   ├── db.js                  # MySQL pool + auto table init + demo seed
+│   │   └── schema.sql             # Full schema — run once for fresh setup
 │   ├── controllers/
 │   │   ├── authController.js      # Signup, login, profile
 │   │   ├── projectController.js   # Project CRUD + member management
 │   │   ├── taskController.js      # Task CRUD + comments
 │   │   └── dashboardController.js # Stats, activity log, user list
 │   ├── middleware/
-│   │   └── auth.js            # JWT verification + admin-only guard
-│   ├── routes/
-│   │   ├── auth.js
-│   │   ├── projects.js
-│   │   ├── tasks.js
-│   │   └── dashboard.js
+│   │   └── auth.js                # JWT verify + admin-only guard
+│   ├── routes/                    # auth / projects / tasks / dashboard
 │   ├── utils/
-│   │   └── logger.js          # Helper to write to activity_log table
+│   │   └── logger.js              # Activity log helper
 │   ├── .env.example
-│   ├── package.json
-│   └── server.js              # Entry point, also serves frontend static files
+│   └── server.js                  # Entry point + static file serving
 ├── frontend/
-│   ├── css/
-│   │   └── style.css          # Everything styled from scratch
+│   ├── css/style.css              # All styles, no framework
 │   ├── js/
-│   │   ├── api.js             # All fetch() wrappers in one place
-│   │   ├── utils.js           # Toast notifications, date formatting, auth helpers
-│   │   └── sidebar.js         # Sidebar rendering + mobile hamburger toggle
+│   │   ├── api.js                 # All fetch() wrappers
+│   │   ├── utils.js               # Toast, dates, auth helpers
+│   │   └── sidebar.js             # Sidebar + mobile toggle
 │   ├── pages/
 │   │   ├── dashboard.html
 │   │   ├── projects.html
 │   │   ├── tasks.html
-│   │   ├── team.html          # Admin only
-│   │   ├── activity.html      # Admin only
+│   │   ├── team.html              # Admin only
+│   │   ├── activity.html          # Admin only
 │   │   └── profile.html
-│   └── index.html             # Login / Signup
-├── .gitignore
-├── package.json
-├── Procfile                   # For Railway
-└── README.md
+│   └── index.html                 # Login / Signup
+├── Procfile                       # Railway deployment
+└── package.json
 ```
 
 ---
 
-## Running it locally
+## ⚙️ Local Setup
 
-You need Node.js (v18 or higher) and MySQL installed.
+### Prerequisites
+- [Node.js](https://nodejs.org/) v18+
+- [MySQL](https://dev.mysql.com/downloads/) 8.0+
 
-**1. Clone the repo**
+### 1. Clone the repo
+
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/your-username/taskmanager.git
 cd taskmanager
 ```
 
-**2. Create the database tables**
-
-Open MySQL:
-```bash
-mysql -u root -p
-```
-Then inside MySQL prompt:
-```sql
-source /full/path/to/taskmanager/backend/config/schema.sql
-```
-
-This creates the `taskmanager_db` database and all 6 tables.
-
-**3. Set up your .env file**
+### 2. Install dependencies
 
 ```bash
-cd backend
-copy .env.example .env        # Windows
-# cp .env.example .env        # Mac/Linux
-```
-
-Open `backend/.env` and fill in your details:
-```
-PORT=5000
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_mysql_password_here
-DB_NAME=taskmanager_db
-JWT_SECRET=any_long_random_string_here
-```
-
-**4. Install dependencies**
-```bash
-cd ..
 npm install
 ```
 
-**5. Start the server**
+### 3. Set up the database
+
 ```bash
-cd backend
+mysql -u root -p
+```
+
+```sql
+source /full/path/to/taskmanager/backend/config/schema.sql
+exit
+```
+
+### 4. Configure environment
+
+```bash
+cp backend/.env.example backend/.env   # Mac/Linux
+copy backend\.env.example backend\.env  # Windows
+```
+
+Edit `backend/.env`:
+
+```env
+PORT=5000
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=taskmanager_db
+JWT_SECRET=any_long_random_string
+```
+
+### 5. Run
+
+```bash
 npm start
 ```
 
-You should see:
+Visit **http://localhost:5000** — demo accounts are auto-seeded on first run.
+
+---
+
+## 🌐 Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `PORT` | No | `5000` | Server port |
+| `DB_HOST` | Yes | — | MySQL host |
+| `DB_USER` | Yes | — | MySQL username |
+| `DB_PASSWORD` | Yes | — | MySQL password |
+| `DB_NAME` | Yes | — | Database name |
+| `JWT_SECRET` | Yes | — | JWT signing secret |
+| `DATABASE_URL` | No | — | Full connection string (Railway auto-sets this) |
+
+---
+
+## 📡 API Reference
+
+<details>
+<summary><b>Auth Routes</b></summary>
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| POST | `/api/auth/signup` | Register new account | Public |
+| POST | `/api/auth/login` | Login, get JWT | Public |
+| GET | `/api/auth/me` | Get current user | Auth |
+| PUT | `/api/auth/profile` | Update profile | Auth |
+
+</details>
+
+<details>
+<summary><b>Project Routes</b></summary>
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| GET | `/api/projects` | List projects | Auth |
+| POST | `/api/projects` | Create project | Admin |
+| PUT | `/api/projects/:id` | Edit project | Admin |
+| DELETE | `/api/projects/:id` | Delete project | Admin |
+| GET | `/api/projects/:id/members` | List members | Auth |
+| POST | `/api/projects/:id/members` | Add member | Admin |
+| DELETE | `/api/projects/:id/members/:uid` | Remove member | Admin |
+
+</details>
+
+<details>
+<summary><b>Task Routes</b></summary>
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| GET | `/api/tasks` | List tasks (filterable) | Auth |
+| POST | `/api/tasks` | Create task | Admin |
+| PUT | `/api/tasks/:id` | Update task | Admin (full) / Member (status only) |
+| DELETE | `/api/tasks/:id` | Delete task | Admin |
+| GET | `/api/tasks/:id/comments` | Get comments | Auth |
+| POST | `/api/tasks/:id/comments` | Add comment | Auth |
+
+</details>
+
+<details>
+<summary><b>Dashboard Routes</b></summary>
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| GET | `/api/dashboard` | Stats + overdue tasks | Auth |
+| GET | `/api/dashboard/users` | All users | Admin |
+| GET | `/api/dashboard/activity` | Activity log | Auth |
+
+</details>
+
+---
+
+## 🗄️ Database Schema
+
 ```
-Server running on port 5000
-MySQL connected successfully
+users              projects           tasks
+──────────         ──────────         ──────────
+id (PK)            id (PK)            id (PK)
+name               name               title
+email (UNIQUE)     description        description
+password (bcrypt)  created_by (FK)    status (enum)
+role (enum)        created_at         priority (enum)
+created_at                            deadline
+                                      assigned_to (FK)
+project_members    task_comments      project_id (FK)
+──────────         ──────────         created_by (FK)
+project_id (FK)    id (PK)
+user_id (FK)       task_id (FK)       activity_log
+                   user_id (FK)       ──────────
+                   comment            id (PK)
+                   created_at         user_id (FK)
+                                      action
+                                      entity_type
+                                      entity_id
+                                      created_at
 ```
 
-Open `http://localhost:5000` in your browser. Sign up with Admin role first.
+---
+
+## 🚢 Deploy on Railway
+
+1. Push repo to GitHub
+2. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub**
+3. Add a **MySQL** plugin from the Railway dashboard
+4. Copy DB credentials from the MySQL plugin's **Connect** tab into Railway's **Variables** panel
+5. Add `JWT_SECRET` variable
+6. In the Railway MySQL console, run `backend/config/schema.sql`
+7. Deploy — Railway reads the `Procfile` automatically
 
 ---
 
-## Deploying on Railway
+## 🔮 Future Improvements
 
-1. Push this repo to GitHub
-2. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub repo
-3. Add a MySQL plugin from the Railway dashboard
-4. Set these environment variables in Railway:
-   - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` — copy from Railway's MySQL plugin panel
-   - `JWT_SECRET` — any long random string
-5. In the Railway MySQL console, run the contents of `backend/config/schema.sql`
-6. Deploy — Railway picks up the `Procfile` automatically and starts the server
+- [ ] Email notifications for task assignments and overdue alerts
+- [ ] File attachments on tasks
+- [ ] Admin ability to change user roles post-signup
+- [ ] Pagination for large task lists
+- [ ] Unit tests for API controllers
+- [ ] Dark mode toggle
 
 ---
 
-## API Reference
+## 👨‍💻 Author
 
-| Method | Endpoint | What it does | Access |
-|--------|----------|--------------|--------|
-| POST | /api/auth/signup | Register a new account | Public |
-| POST | /api/auth/login | Login, get JWT token | Public |
-| GET | /api/auth/me | Get your own profile | Auth |
-| PUT | /api/auth/profile | Update name or email | Auth |
-| GET | /api/projects | List accessible projects | Auth |
-| POST | /api/projects | Create a project | Admin |
-| PUT | /api/projects/:id | Edit a project | Admin |
-| DELETE | /api/projects/:id | Delete a project | Admin |
-| GET | /api/projects/:id/members | List project members | Auth |
-| POST | /api/projects/:id/members | Add a member | Admin |
-| DELETE | /api/projects/:id/members/:uid | Remove a member | Admin |
-| GET | /api/tasks | List tasks (supports filters) | Auth |
-| POST | /api/tasks | Create a task | Admin |
-| PUT | /api/tasks/:id | Update task | Admin full / Member status-only |
-| DELETE | /api/tasks/:id | Delete a task | Admin |
-| GET | /api/tasks/:id/comments | Get comments | Auth |
-| POST | /api/tasks/:id/comments | Add a comment | Auth |
-| GET | /api/dashboard | Dashboard stats | Auth |
-| GET | /api/dashboard/users | List all users | Admin |
-| GET | /api/dashboard/activity | Full activity log | Admin |
+**Kartikey Kumar Tripathi**  
+Babu Banarasi Das Northern India Institute of Technology
 
-Members can only update the `status` field on tasks assigned to them. Any attempt to change title, priority, or deadline returns a 403.
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/your-username)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/your-profile)
 
 ---
 
-## Database Schema
+<div align="center">
 
-Six tables:
+*Built with Node.js + Express + MySQL + Vanilla JS*  
+⭐ Star this repo if you found it helpful!
 
-- `users` — name, email, hashed password, role
-- `projects` — name, description, created_by
-- `project_members` — junction table linking users to projects
-- `tasks` — title, description, status, priority, deadline, assigned_to, project_id
-- `task_comments` — each comment linked to a task and a user
-- `activity_log` — action string, entity type, entity id, user id, timestamp
-
-Passwords are hashed with bcrypt (10 salt rounds) before storage. JWTs carry the user's id, name, email, and role, and are valid for 7 days.
-
----
-
-## Things I'd add with more time
-
-- Email notifications when a task is assigned or goes overdue
-- File attachments on tasks
-- Admin ability to change a user's role after signup
-- Pagination on large task lists
-- Unit tests for the API controllers
-
----
-
-*Node.js + Express + MySQL + Vanilla JS. Built and debugged manually.*
+</div>
